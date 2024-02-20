@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from firebase_admin import firestore
-from google.cloud import firestore
 from google.oauth2 import service_account
+from google.cloud import firestore
+from google.cloud.firestore import SERVER_TIMESTAMP
 
 key_path = "dip.json"
 
@@ -19,7 +19,7 @@ def post_data():
 
     doc_ref = db.collection(collection_id).document(document_id)
     doc_ref.set({
-        'timestamp': firestore.FieldValue.server_timestamp(),
+        'timestamp': SERVER_TIMESTAMP,
         'data': data
     })
 
