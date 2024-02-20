@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
-from google.cloud import firestore
 import os
 import json
 
@@ -11,6 +10,8 @@ firebase_admin.initialize_app(cred)
 
 app = Flask(__name__)
 
+db = firestore.client()
+
 
 @app.route('/post-data', methods=['POST'])
 def post_data():
@@ -19,7 +20,7 @@ def post_data():
         collection_id = data.get('mac', 'defaultCollection')
         document_id = data.get('documentId', 'defaultDocument')
 
-        doc_ref = firestore.client().collection(collection_id).document(document_id)
+        doc_ref = db.collection(collection_id).document(document_id)
 
         doc_ref.set({
             'timestamp': firestore.SERVER_TIMESTAMP,
