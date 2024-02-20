@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Flask, request, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -23,7 +25,7 @@ def post_data():
         doc_ref = db.collection(collection_id).document(document_id)
 
         doc_ref.set({
-            'timestamp': firestore.SERVER_TIMESTAMP,
+            'timestamp': datetime.now(),
             'data': data
         })
 
