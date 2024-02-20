@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
-from google.oauth2 import service_account
+import firebase_admin
+from firebase_admin import credentials
 from google.cloud import firestore
 from google.cloud.firestore import SERVER_TIMESTAMP
 import os
@@ -7,8 +8,10 @@ import json
 
 service_account_info = json.loads(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'))
 
-credentials = service_account.Credentials.from_service_account_file(key_path)
-db = firestore.Client(credentials=credentials, project=credentials.project_id)
+cred = credentials.Certificate(service_account_info)
+firebase_admin.initialize_app(cred)
+
+db = firestore.Client()
 
 app = Flask(__name__)
 
