@@ -22,7 +22,7 @@ def post_data():
         collection_id = data.get('mac', '08D1F9355FE8')
         document_id = data.get('documentId', datetime.time())
 
-        doc_ref = db.collection(collection_id).document(document_id)
+        doc_ref = db.collection(collection_id).document()
 
         doc_ref.set({
             'data': data
