@@ -19,13 +19,12 @@ db = firestore.client()
 def post_data():
     try:
         data = request.json
-        collection_id = data.get('mac', 'defaultCollection')
-        document_id = data.get('documentId', 'defaultDocument')
+        collection_id = data.get('mac', '08D1F9355FE8')
+        document_id = data.get('documentId', datetime.time())
 
         doc_ref = db.collection(collection_id).document(document_id)
 
         doc_ref.set({
-            'timestamp': datetime.time(),
             'data': data
         })
 
