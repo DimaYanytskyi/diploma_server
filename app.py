@@ -25,7 +25,7 @@ def post_data():
         doc_ref = db.collection(collection_id).document(document_id)
 
         doc_ref.set({
-            'timestamp': datetime.now(),
+            'timestamp': datetime.time(),
             'data': data
         })
 
