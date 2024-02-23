@@ -6,8 +6,7 @@ from firebase_admin import credentials, firestore
 import os
 import json
 
-service_account_info = json.loads(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'))
-cred = credentials.Certificate(service_account_info)
+cred = credentials.Certificate("diploma-bd296-cf87a4da4729.json")
 firebase_admin.initialize_app(cred)
 
 app = Flask(__name__)
@@ -19,14 +18,14 @@ db = firestore.client()
 def post_data():
     try:
         data = request.json
-        collection_id = data.get('mac', '08D1F9355FE8')
-        document_id = data.get('documentId', datetime.time())
+        collection_id = data.get('mac', 'defaultCollection')
+        document_id = data.get('documentId', 'defaultDatetime')
 
-        doc_ref = db.collection(collection_id).document()
-
-        doc_ref.set({
+        res = db.collection(collection_id).document(document_id).set({
             'data': data
         })
+
+        print(res)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
