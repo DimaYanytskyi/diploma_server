@@ -24,17 +24,27 @@ db = firestore.client()
 def post_data():
     try:
         data = request.json
-        print("Received request data:", data)
-        collection_id = data.get('mac', 'defaultCollection')
-        document_id = datetime.datetime.now().strftime("%d%m%Y")
+        mac = data.get('mac', 'defaultDocument')
+        now = datetime.datetime.now()
 
-        print(f"Using collection ID: {collection_id} and document ID: {document_id}")
+        year = now.strftime("%Y")
+        month = now.strftime("%m")
+        week = str(now.isocalendar()[1])
+        day = now.strftime("%d")
+        hour_block = str(now.hour // 4 * 4).zfill(2) + "-" + str(now.hour // 4 * 4 + 4).zfill(2)
 
-        res = db.collection(collection_id).document(document_id).set({
-            'data': data
-        })
+        path = f"devices/{mac}/{year}/{month}/{week}/{day}/{hour_block}"
+        document_ref = db.document(path)
 
-        print(res)
+        doc = document_ref.get()
+        if doc.exists:
+            current_data = doc.to_dict().get('data', [])
+        else:
+            current_data = []
+
+        current_data.append(data)
+
+        document_ref.set({'data': current_data}, merge=True)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
