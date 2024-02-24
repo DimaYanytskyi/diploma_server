@@ -51,8 +51,8 @@ def post_data():
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
-        aggregated_data_daily = aggregate_daily_blocks(
-            db.collection(path).document("aggregated").get().to_dict().get('data'))
+        hour_block_index = client_timestamp.hour // 4
+        aggregated_data_daily = aggregate_daily_blocks(hour_block_index, aggregated_data)
         path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
@@ -94,25 +94,29 @@ def aggregate_hourly_data(hourly_block):
     return hourly_aggregates
 
 
-def aggregate_daily_blocks(hourly_blocks):
+def aggregate_daily_blocks(hour_block_index, hourly_block):
     daily_aggregates = [{} for _ in range(6)]
 
-    for block_index, hourly_block in enumerate(hourly_blocks):
-        for key, value in hourly_block.items():
-            if key not in daily_aggregates[block_index]:
-                daily_aggregates[block_index][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+    for entry in hourly_block:
+        for key, value in entry.items():
+            if key not in daily_aggregates[hour_block_index]:
+                daily_aggregates[hour_block_index][key] = \
+                    {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
-                daily_aggregates[block_index][key]['min'] = min(daily_aggregates[block_index][key]['min'], value['min'])
-                daily_aggregates[block_index][key]['max'] = max(daily_aggregates[block_index][key]['max'], value['max'])
-                daily_aggregates[block_index][key]['sum'] += value['avg']
-                daily_aggregates[block_index][key]['count'] += 1
+                daily_aggregates[hour_block_index][key]['min'] = min(daily_aggregates[hour_block_index][key]['min'],
+                                                                     value['min'])
+                daily_aggregates[hour_block_index][key]['max'] = max(daily_aggregates[hour_block_index][key]['max'],
+                                                                     value['max'])
+                daily_aggregates[hour_block_index][key]['sum'] += value['avg']
+                daily_aggregates[hour_block_index][key]['count'] += 1
 
-        for key in daily_aggregates[block_index]:
-            if daily_aggregates[block_index][key]['count'] > 0:
-                daily_aggregates[block_index][key]['avg'] = daily_aggregates[block_index][key]['sum'] / daily_aggregates[block_index][key]['count']
-                del daily_aggregates[block_index][key]['sum'], daily_aggregates[block_index][key]['count']
-            else:
-                daily_aggregates[block_index][key] = {'min': None, 'max': None, 'avg': None}
+    for key in daily_aggregates[hour_block_index]:
+        if daily_aggregates[hour_block_index][key]['count'] > 0:
+            daily_aggregates[hour_block_index][key]['avg'] = (daily_aggregates[hour_block_index][key]['sum'] /
+                                                              daily_aggregates[hour_block_index][key]['count'])
+            del daily_aggregates[hour_block_index][key]['sum'], daily_aggregates[hour_block_index][key]['count']
+        else:
+            daily_aggregates[hour_block_index][key] = {'min': None, 'max': None, 'avg': None}
 
     return daily_aggregates
 
