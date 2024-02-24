@@ -16,7 +16,6 @@ else:
     raise ValueError("Firebase credentials environment variable is not set.")
 
 app = Flask(__name__)
-
 db = firestore.client()
 
 
@@ -33,7 +32,7 @@ def post_data():
         day = now.strftime("%d")
         hour_block = str(now.hour // 4 * 4).zfill(2) + "-" + str(now.hour // 4 * 4 + 4).zfill(2)
 
-        path = f"devices/{mac}/{year}/{month}/{week}/{day}/{hour_block}"
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}"
         document_ref = db.collection(path).document("data")
 
         doc = document_ref.get()
@@ -46,10 +45,33 @@ def post_data():
 
         document_ref.set({'data': current_data}, merge=True)
 
+        aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
+        print(aggregated_data)
+
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
         print("Error occurred:", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+def aggregate_hourly_data(hourly_block):
+    aggregates = {key: {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+                  for key in hourly_block[0] if key != 'mac'}
+
+    for entry in hourly_block:
+        for key, value in entry.items():
+            if key == 'mac':
+                continue
+            aggregates[key]['min'] = min(aggregates[key]['min'], value)
+            aggregates[key]['max'] = max(aggregates[key]['max'], value)
+            aggregates[key]['sum'] += value
+            aggregates[key]['count'] += 1
+
+    for key in aggregates:
+        aggregates[key]['avg'] = aggregates[key]['sum'] / aggregates[key]['count']
+        del aggregates[key]['sum'], aggregates[key]['count']
+
+    return aggregates
 
 
 if __name__ == '__main__':
