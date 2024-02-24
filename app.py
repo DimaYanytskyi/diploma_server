@@ -104,7 +104,7 @@ def aggregate_daily_blocks(hourly_blocks):
 
                 daily_aggregates[block_index][key]['min'] = min(daily_aggregates[block_index][key]['min'], value['min'])
                 daily_aggregates[block_index][key]['max'] = max(daily_aggregates[block_index][key]['max'], value['max'])
-                daily_aggregates[block_index][key]['sum'] += value['avg'] * value['count']
+                daily_aggregates[block_index][key]['sum'] += daily_aggregates[block_index][key]['avg'] * daily_aggregates[block_index][key]['count']
                 daily_aggregates[block_index][key]['count'] += 1
 
         for key in daily_aggregates[block_index]:
