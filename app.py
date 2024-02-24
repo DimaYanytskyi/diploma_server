@@ -18,8 +18,11 @@ db = firestore.client()
 def post_data():
     try:
         data = request.json
+        print("Received request data:", data)
         collection_id = data.get('mac', 'defaultCollection')
         document_id = data.get('documentId', 'defaultDatetime')
+
+        print(f"Using collection ID: {collection_id} and document ID: {document_id}")
 
         res = db.collection(collection_id).document(document_id).set({
             'data': data
@@ -29,6 +32,7 @@ def post_data():
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
+        print("Error occurred:", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
