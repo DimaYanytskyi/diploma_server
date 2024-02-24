@@ -8,10 +8,12 @@ import json
 import base64
 
 encoded_credentials = os.environ.get('FIREBASE_CREDENTIALS_BASE64')
-decoded_credentials = json.loads(base64.b64decode(encoded_credentials))
-
-cred = credentials.Certificate(decoded_credentials)
-firebase_admin.initialize_app(cred)
+if encoded_credentials:
+    decoded_credentials = json.loads(base64.b64decode(encoded_credentials))
+    cred = credentials.Certificate(decoded_credentials)
+    firebase_admin.initialize_app(cred)
+else:
+    raise ValueError("Firebase credentials environment variable is not set.")
 
 app = Flask(__name__)
 
