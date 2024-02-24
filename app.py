@@ -1,4 +1,5 @@
 import datetime
+from datetime import datetime
 
 from flask import Flask, request, jsonify
 import firebase_admin
@@ -48,7 +49,7 @@ def post_data():
         aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
 
         aggregated_data_ref = db.collection(path).document("aggregated")
-        aggregated_data_ref.set(aggregated_data, merge=True)
+        aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
@@ -65,7 +66,8 @@ def aggregate_hourly_data(hourly_block):
                 hour_aggregate[key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
     for entry in hourly_block:
-        hour_index = entry['timestamp'].hour % 4
+        entry_datetime = datetime.fromtimestamp(entry['timestamp'])
+        hour_index = entry_datetime.hour % 4
         for key, value in entry.items():
             if key in ['mac', 'timestamp']:
                 continue
