@@ -52,7 +52,7 @@ def post_data():
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
         aggregated_data_daily = aggregate_daily_blocks(db.collection(path).document("aggregated").get().to_dict().get('data'))
-        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}"
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
 
