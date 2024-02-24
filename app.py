@@ -46,7 +46,9 @@ def post_data():
         document_ref.set({'data': current_data}, merge=True)
 
         aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
-        print(aggregated_data)
+
+        aggregated_data_ref = db.collection(path).document("aggregated")
+        aggregated_data_ref.set(aggregated_data, merge=True)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
@@ -55,23 +57,33 @@ def post_data():
 
 
 def aggregate_hourly_data(hourly_block):
-    aggregates = {key: {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
-                  for key in hourly_block[0] if key != 'mac'}
+    hourly_aggregates = [{} for _ in range(4)]
+
+    for hour_aggregate in hourly_aggregates:
+        for key in hourly_block[0]:
+            if key not in ['mac', 'timestamp']:
+                hour_aggregate[key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
     for entry in hourly_block:
+        hour_index = entry['timestamp'].hour % 4
         for key, value in entry.items():
-            if key == 'mac':
+            if key in ['mac', 'timestamp']:
                 continue
-            aggregates[key]['min'] = min(aggregates[key]['min'], value)
-            aggregates[key]['max'] = max(aggregates[key]['max'], value)
-            aggregates[key]['sum'] += value
-            aggregates[key]['count'] += 1
+            hour_aggregate = hourly_aggregates[hour_index]
+            hour_aggregate[key]['min'] = min(hour_aggregate[key]['min'], value)
+            hour_aggregate[key]['max'] = max(hour_aggregate[key]['max'], value)
+            hour_aggregate[key]['sum'] += value
+            hour_aggregate[key]['count'] += 1
 
-    for key in aggregates:
-        aggregates[key]['avg'] = aggregates[key]['sum'] / aggregates[key]['count']
-        del aggregates[key]['sum'], aggregates[key]['count']
+    for hour_aggregate in hourly_aggregates:
+        for key in hour_aggregate:
+            if 'count' in hour_aggregate[key] and hour_aggregate[key]['count'] > 0:
+                hour_aggregate[key]['avg'] = hour_aggregate[key]['sum'] / hour_aggregate[key]['count']
+                del hour_aggregate[key]['sum'], hour_aggregate[key]['count']
+            else:
+                hour_aggregate[key] = {'min': None, 'avg': None, 'max': None}
 
-    return aggregates
+    return hourly_aggregates
 
 
 if __name__ == '__main__':
