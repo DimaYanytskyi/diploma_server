@@ -51,7 +51,8 @@ def post_data():
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
-        aggregated_data_daily = aggregate_daily_blocks(db.collection(path).document("aggregated").get().to_dict().get('data'))
+        aggregated_data_daily = aggregate_daily_blocks(
+            db.collection(path).document("aggregated").get().to_dict().get('data'))
         path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
@@ -93,60 +94,25 @@ def aggregate_hourly_data(hourly_block):
     return hourly_aggregates
 
 
-# def aggregate_daily_blocks(hourly_blocks):
-#     daily_aggregates = [{} for _ in range(6)]
-#
-#     for block_index, hourly_block in enumerate(hourly_blocks):
-#         for key, value in hourly_block.items():
-#             if key not in daily_aggregates[block_index]:
-#                 daily_aggregates[block_index][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
-#
-#                 daily_aggregates[block_index][key]['min'] = min(daily_aggregates[block_index][key]['min'], value['min'])
-#                 daily_aggregates[block_index][key]['max'] = max(daily_aggregates[block_index][key]['max'], value['max'])
-#                 daily_aggregates[block_index][key]['sum'] += value['avg'] * value['count']
-#                 daily_aggregates[block_index][key]['count'] += value['count']
-#
-#         for key in daily_aggregates[block_index]:
-#             if daily_aggregates[block_index][key]['count'] > 0:
-#                 daily_aggregates[block_index][key]['avg'] = daily_aggregates[block_index][key]['sum'] / daily_aggregates[block_index][key]['count']
-#                 del daily_aggregates[block_index][key]['sum'], daily_aggregates[block_index][key]['count']
-#             else:
-#                 daily_aggregates[block_index][key] = {'min': None, 'max': None, 'avg': None}
-#
-#     return daily_aggregates
-
-
 def aggregate_daily_blocks(hourly_blocks):
     daily_aggregates = [{} for _ in range(6)]
 
     for block_index, hourly_block in enumerate(hourly_blocks):
         for key, value in hourly_block.items():
-            if key not in ['mac', 'timestamp']:  # Exclude keys that don't have numerical values
-                if key not in daily_aggregates[block_index]:
-                    daily_aggregates[block_index][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0,
-                                                              'count': 0}
+            if key not in daily_aggregates[block_index]:
+                daily_aggregates[block_index][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
-                    min_value = value.get('min', float('inf'))
-                    max_value = value.get('max', float('-inf'))
-                    avg_value = value.get('avg', 0)
-                    count_value = value.get('count', 0)
+                daily_aggregates[block_index][key]['min'] = min(daily_aggregates[block_index][key]['min'], value['min'])
+                daily_aggregates[block_index][key]['max'] = max(daily_aggregates[block_index][key]['max'], value['max'])
+                daily_aggregates[block_index][key]['sum'] += value['avg'] * value['count']
+                daily_aggregates[block_index][key]['count'] += 1
 
-                    # Update aggregates
-                    daily_aggregates[block_index][key]['min'] = min(daily_aggregates[block_index][key]['min'],
-                                                                    min_value)
-                    daily_aggregates[block_index][key]['max'] = max(daily_aggregates[block_index][key]['max'],
-                                                                    max_value)
-                    if avg_value and count_value:  # Ensure 'avg' and 'count' are not 0 or None
-                        daily_aggregates[block_index][key]['sum'] += avg_value * count_value
-                        daily_aggregates[block_index][key]['count'] += count_value
-
-        # Calculate averages
-        for key, aggregated_data in daily_aggregates[block_index].items():
-            if aggregated_data['count'] > 0:
-                aggregated_data['avg'] = aggregated_data['sum'] / aggregated_data['count']
-                del aggregated_data['sum'], aggregated_data['count']
+        for key in daily_aggregates[block_index]:
+            if daily_aggregates[block_index][key]['count'] > 0:
+                daily_aggregates[block_index][key]['avg'] = daily_aggregates[block_index][key]['sum'] / daily_aggregates[block_index][key]['count']
+                del daily_aggregates[block_index][key]['sum'], daily_aggregates[block_index][key]['count']
             else:
-                aggregated_data['min'], aggregated_data['max'], aggregated_data['avg'] = None, None, None
+                daily_aggregates[block_index][key] = {'min': None, 'max': None, 'avg': None}
 
     return daily_aggregates
 
