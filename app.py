@@ -65,6 +65,13 @@ def post_data():
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_weekly}, merge=True)
 
+        # monthly data
+        week_index = client_timestamp.month // 5
+        aggregated_data_monthly = aggregate_monthly_blocks(week_index, aggregated_data_weekly)
+        path = f"devices/{mac}/{year}/{month}/data"
+        aggregated_data_ref = db.collection(path).document("aggregated")
+        aggregated_data_ref.set({'data': aggregated_data_monthly}, merge=True)
+
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
         print("Error occurred:", str(e))
@@ -151,6 +158,31 @@ def aggregate_weekly_blocks(day, day_block):
             week_aggregates[day][key] = {'min': None, 'max': None, 'avg': None}
 
     return week_aggregates
+
+
+def aggregate_monthly_blocks(week, week_block):
+    month_aggregates = [{} for _ in range(5)]
+
+    for entry in week_block:
+        for key, value in entry.items():
+            if key not in month_aggregates[week]:
+                month_aggregates[week][key] = \
+                    {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+
+                month_aggregates[week][key]['min'] = min(month_aggregates[week][key]['min'], value['min'])
+                month_aggregates[week][key]['max'] = max(month_aggregates[week][key]['max'], value['max'])
+                month_aggregates[week][key]['sum'] += value['avg']
+                month_aggregates[week][key]['count'] += 1
+
+    for key in month_aggregates[week]:
+        if month_aggregates[week][key]['count'] > 0:
+            month_aggregates[week][key]['avg'] = (month_aggregates[week][key]['sum']
+                                                  / month_aggregates[week][key]['count'])
+            del month_aggregates[week][key]['sum'], month_aggregates[week][key]['count']
+        else:
+            month_aggregates[week][key] = {'min': None, 'max': None, 'avg': None}
+
+    return month_aggregates
 
 
 if __name__ == '__main__':
