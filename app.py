@@ -26,7 +26,7 @@ def post_data():
         data = request.json
         print("Received request data:", data)
         collection_id = data.get('mac', 'defaultCollection')
-        document_id = data.get('documentId', 'defaultDatetime')
+        document_id = datetime.datetime.now().strftime("%d%m%Y")
 
         print(f"Using collection ID: {collection_id} and document ID: {document_id}")
 
