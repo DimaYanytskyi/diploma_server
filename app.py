@@ -26,7 +26,6 @@ def post_data():
         mac = data.get('mac', 'defaultDocument')
         client_timestamp = datetime.datetime.fromtimestamp(data.get('timestamp'), tz=datetime.timezone.utc)
 
-        print("Received data:", client_timestamp)
         year = client_timestamp.strftime("%Y")
         month = client_timestamp.strftime("%m")
         week = str(client_timestamp.isocalendar()[1])
@@ -47,12 +46,12 @@ def post_data():
 
         document_ref.set({'data': current_data}, merge=True)
 
-        aggregated_data = aggregate_hourly_data(db.collection(path).document("aggregated").get().to_dict().get('data'))
+        aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
 
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
-        aggregated_data_daily = aggregate_daily_blocks(db.collection(path).document("data").get().to_dict().get('data'))
+        aggregated_data_daily = aggregate_daily_blocks(db.collection(path).document("aggregated").get().to_dict().get('data'))
         path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
