@@ -46,16 +46,24 @@ def post_data():
 
         document_ref.set({'data': current_data}, merge=True)
 
+        # hourly data
         aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
-
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
+        # daily data
         hour_block_index = client_timestamp.hour // 4
         aggregated_data_daily = aggregate_daily_blocks(hour_block_index, aggregated_data)
         path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
+
+        # weekly data
+        day_index = client_timestamp.day // 7
+        aggregated_data_weekly = aggregate_weekly_blocks(day_index, aggregated_data_daily)
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data"
+        aggregated_data_ref = db.collection(path).document("aggregated")
+        aggregated_data_ref.set({'data': aggregated_data_weekly}, merge=True)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
@@ -119,6 +127,30 @@ def aggregate_daily_blocks(hour_block_index, hourly_block):
             daily_aggregates[hour_block_index][key] = {'min': None, 'max': None, 'avg': None}
 
     return daily_aggregates
+
+
+def aggregate_weekly_blocks(day, day_block):
+    week_aggregates = [{} for _ in range(7)]
+
+    for entry in day_block:
+        for key, value in entry.items():
+            if key not in week_aggregates[day]:
+                week_aggregates[day][key] = \
+                    {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+
+                week_aggregates[day][key]['min'] = min(week_aggregates[day][key]['min'], value['min'])
+                week_aggregates[day][key]['max'] = max(week_aggregates[day][key]['max'], value['max'])
+                week_aggregates[day][key]['sum'] += value['avg']
+                week_aggregates[day][key]['count'] += 1
+
+    for key in week_aggregates[day]:
+        if week_aggregates[day][key]['count'] > 0:
+            week_aggregates[day][key]['avg'] = (week_aggregates[day][key]['sum'] / week_aggregates[day][key]['count'])
+            del week_aggregates[day][key]['sum'], week_aggregates[day][key]['count']
+        else:
+            week_aggregates[day][key] = {'min': None, 'max': None, 'avg': None}
+
+    return week_aggregates
 
 
 if __name__ == '__main__':
