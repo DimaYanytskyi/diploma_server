@@ -97,7 +97,7 @@ def aggregate_daily_blocks(hourly_blocks):
     daily_aggregates = [{} for _ in range(6)]
 
     for block_index, hourly_block in enumerate(hourly_blocks):
-        for key, value in hourly_block:
+        for key, value in hourly_block.items():
             if key not in daily_aggregates[block_index]:
                 daily_aggregates[block_index][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
