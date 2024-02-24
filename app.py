@@ -1,5 +1,4 @@
 import datetime
-from datetime import datetime
 
 from flask import Flask, request, jsonify
 import firebase_admin
@@ -66,7 +65,7 @@ def aggregate_hourly_data(hourly_block):
                 hour_aggregate[key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
     for entry in hourly_block:
-        entry_datetime = datetime.fromtimestamp(entry['timestamp'])
+        entry_datetime = datetime.datetime.fromtimestamp(entry['timestamp'])
         hour_index = entry_datetime.hour % 4
         for key, value in entry.items():
             if key in ['mac', 'timestamp']:
