@@ -5,8 +5,12 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 import json
+import base64
 
-cred = credentials.Certificate("diploma-bd296-cf87a4da4729.json")
+encoded_credentials = os.environ.get('FIREBASE_CREDENTIALS_BASE64')
+decoded_credentials = json.loads(base64.b64decode(encoded_credentials))
+
+cred = credentials.Certificate(decoded_credentials)
 firebase_admin.initialize_app(cred)
 
 app = Flask(__name__)
