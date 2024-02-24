@@ -26,6 +26,7 @@ def post_data():
         mac = data.get('mac', 'defaultDocument')
         client_timestamp = datetime.datetime.fromtimestamp(data.get('timestamp'), tz=datetime.timezone.utc)
 
+        print("Received data:", data)
         year = client_timestamp.strftime("%Y")
         month = client_timestamp.strftime("%m")
         week = str(client_timestamp.isocalendar()[1])
