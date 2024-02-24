@@ -25,12 +25,14 @@ def post_data():
         data = request.json
         mac = data.get('mac', 'defaultDocument')
         now = datetime.datetime.now()
+        print(f"Current server time: {now}")
 
         year = now.strftime("%Y")
         month = now.strftime("%m")
         week = str(now.isocalendar()[1])
         day = now.strftime("%d")
         hour_block = str(now.hour // 4 * 4).zfill(2) + "-" + str(now.hour // 4 * 4 + 4).zfill(2)
+        print(f"Hour block calculated: {hour_block}")
 
         path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}/data"
         document_ref = db.collection(path).document("data")
