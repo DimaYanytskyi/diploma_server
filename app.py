@@ -34,7 +34,7 @@ def post_data():
         hour_block = str(now.hour // 4 * 4).zfill(2) + "-" + str(now.hour // 4 * 4 + 4).zfill(2)
 
         path = f"devices/{mac}/{year}/{month}/{week}/{day}/{hour_block}"
-        document_ref = db.document(path)
+        document_ref = db.collection(path).document("data")
 
         doc = document_ref.get()
         if doc.exists:
