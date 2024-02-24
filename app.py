@@ -46,10 +46,15 @@ def post_data():
 
         document_ref.set({'data': current_data}, merge=True)
 
-        aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
+        aggregated_data = aggregate_hourly_data(db.collection(path).document("aggregated").get().to_dict().get('data'))
 
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
+
+        aggregated_data_daily = aggregate_daily_blocks(db.collection(path).document("data").get().to_dict().get('data'))
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}"
+        aggregated_data_ref = db.collection(path).document("aggregated")
+        aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
@@ -86,6 +91,30 @@ def aggregate_hourly_data(hourly_block):
                 hour_aggregate[key] = {'min': None, 'avg': None, 'max': None}
 
     return hourly_aggregates
+
+
+def aggregate_daily_blocks(hourly_blocks):
+    daily_aggregates = [{} for _ in range(6)]
+
+    for block_index, hourly_block in enumerate(hourly_blocks):
+        for entry in hourly_block:
+            for key, value in entry.items():
+                if key not in daily_aggregates[block_index]:
+                    daily_aggregates[block_index][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+
+                daily_aggregates[block_index][key]['min'] = min(daily_aggregates[block_index][key]['min'], value['min'])
+                daily_aggregates[block_index][key]['max'] = max(daily_aggregates[block_index][key]['max'], value['max'])
+                daily_aggregates[block_index][key]['sum'] += value['avg'] * value['count']
+                daily_aggregates[block_index][key]['count'] += value['count']
+
+        for key in daily_aggregates[block_index]:
+            if daily_aggregates[block_index][key]['count'] > 0:
+                daily_aggregates[block_index][key]['avg'] = daily_aggregates[block_index][key]['sum'] / daily_aggregates[block_index][key]['count']
+                del daily_aggregates[block_index][key]['sum'], daily_aggregates[block_index][key]['count']
+            else:
+                daily_aggregates[block_index][key] = {'min': None, 'max': None, 'avg': None}
+
+    return daily_aggregates
 
 
 if __name__ == '__main__':
