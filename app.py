@@ -158,9 +158,9 @@ def safe_max(a, b):
 
 def safe_add(a, b):
     if a is None:
-        a = 0
+        a = b
     if b is None:
-        b = 0
+        b = a
     return a + b
 
 
