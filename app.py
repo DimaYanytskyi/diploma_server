@@ -90,7 +90,7 @@ def aggregate_hourly_data(hourly_block):
     for hour_aggregate in hourly_aggregates:
         for key in hourly_block[0]:
             if key not in ['mac', 'timestamp']:
-                hour_aggregate[key] = {'min': 0, 'max': 0, 'sum': 0, 'count': 0}
+                hour_aggregate[key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
     for entry in hourly_block:
         entry_datetime = datetime.datetime.fromtimestamp(entry['timestamp'])
@@ -110,7 +110,7 @@ def aggregate_hourly_data(hourly_block):
                 hour_aggregate[key]['avg'] = hour_aggregate[key]['sum'] / hour_aggregate[key]['count']
                 del hour_aggregate[key]['sum'], hour_aggregate[key]['count']
             else:
-                hour_aggregate[key] = {'min': 0, 'avg': 0, 'max': 0}
+                hour_aggregate[key] = {'min': None, 'max': None, 'avg': None}
 
     return hourly_aggregates
 
@@ -181,14 +181,18 @@ def safe_add(a, b):
 
 
 def safe_min(a, b):
-    if a is None: return b
-    if b is None: return a
+    if a is None:
+        return b
+    if b is None:
+        return a
     return min(a, b)
 
 
 def safe_max(a, b):
-    if a is None: return b
-    if b is None: return a
+    if a is None:
+        return b
+    if b is None:
+        return a
     return max(a, b)
 
 
