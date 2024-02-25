@@ -73,10 +73,10 @@ def post_data():
 
         # yearly data
         month_index = client_timestamp.month - 1
-        aggregated_data_monthly = aggregate_data(month_index, aggregated_data_monthly, 12)
+        aggregated_data_yearly = aggregate_data(month_index, aggregated_data_monthly, 12)
         path = f"devices/{mac}/{year}"
         aggregated_data_ref = db.collection(path).document("aggregated")
-        aggregated_data_ref.set({'data': aggregated_data_monthly}, merge=True)
+        aggregated_data_ref.set({'data': aggregated_data_yearly}, merge=True)
 
         return jsonify({"status": "success", "message": "Data posted to Firestore successfully."}), 200
     except Exception as e:
