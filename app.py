@@ -33,8 +33,8 @@ def post_data():
         hour_block = str(client_timestamp.hour // 4 * 4).zfill(2) + "-" + str(client_timestamp.hour // 4 * 4 + 4).zfill(
             2)
 
-        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}/data"
-        document_ref = db.collection(path).document("data")
+        path = f"devices/{mac}/{year}/{month}/month/{week}/week/{day}/day/{hour_block}/hour_block"
+        document_ref = db.collection(path).document("hour_block")
 
         doc = document_ref.get()
         if doc.exists:
@@ -46,28 +46,28 @@ def post_data():
         document_ref.set({'data': current_data}, merge=True)
 
         # hourly data
-        aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
+        aggregated_data = aggregate_hourly_data(db.collection(path).document("hour_block").get().to_dict().get('data'))
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
         # daily data
         hour_block_index = client_timestamp.hour // 4
         aggregated_data_daily = aggregate_data(hour_block_index, aggregated_data, 6)
-        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data"
+        path = f"devices/{mac}/{year}/{month}/month/{week}/week/{day}/day"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
 
         # weekly data
         day_index = client_timestamp.day // 7
         aggregated_data_weekly = aggregate_data(day_index, aggregated_data_daily, 7)
-        path = f"devices/{mac}/{year}/{month}/data/{week}/data"
+        path = f"devices/{mac}/{year}/{month}/month/{week}/week"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_weekly}, merge=True)
 
         # monthly data
         week_index = client_timestamp.month // 5
         aggregated_data_monthly = aggregate_data(week_index, aggregated_data_weekly, 5)
-        path = f"devices/{mac}/{year}/{month}/data"
+        path = f"devices/{mac}/{year}/{month}/month"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_monthly}, merge=True)
 
