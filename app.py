@@ -120,48 +120,76 @@ def aggregate_data(time_segment, data_block, array_count):
 
     for entry in data_block:
         for key, value in entry.items():
-            if key not in aggregates[time_segment]:
-                aggregates[time_segment][key] = \
-                    {'min': 0, 'max': 0, 'sum': 0, 'count': 0}
+            if value['avg'] == 0:
+                continue
 
-                aggregates[time_segment][key]['min'] = safe_min(aggregates[time_segment][key]['min'], value['min'])
-                aggregates[time_segment][key]['max'] = safe_max(aggregates[time_segment][key]['max'], value['max'])
-                aggregates[time_segment][key]['sum'] = safe_add(aggregates[time_segment][key]['sum'], value['avg'])
+            if key not in aggregates[time_segment]:
+                aggregates[time_segment][key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+
+            aggregates[time_segment][key]['min'] = safe_min(aggregates[time_segment][key]['min'], value.get('min'))
+            aggregates[time_segment][key]['max'] = safe_max(aggregates[time_segment][key]['max'], value.get('max'))
+            aggregates[time_segment][key]['sum'] = safe_add(aggregates[time_segment][key]['sum'], value.get('avg'))
+
+            if value.get('avg') is not None:
                 aggregates[time_segment][key]['count'] += 1
 
     for key in aggregates[time_segment]:
         if aggregates[time_segment][key]['count'] > 0:
-            aggregates[time_segment][key]['avg'] = (aggregates[time_segment][key]['sum'] /
-                                                    aggregates[time_segment][key]['count'])
+            aggregates[time_segment][key]['avg'] = aggregates[time_segment][key]['sum'] / aggregates[time_segment][key][
+                'count']
             del aggregates[time_segment][key]['sum'], aggregates[time_segment][key]['count']
         else:
-            aggregates[time_segment][key] = {'min': 0, 'max': 0, 'avg': 0}
+            aggregates[time_segment][key] = {'min': None, 'max': None, 'avg': None}
 
     return aggregates
 
 
-def safe_min(a, b):
-    if a is None:
+# def aggregate_data(time_segment, data_block, array_count):
+#     aggregates = [{} for _ in range(array_count)]
+#
+#     for entry in data_block:
+#         for key, value in entry.items():
+#             if key not in aggregates[time_segment]:
+#                 aggregates[time_segment][key] = \
+#                     {'min': 0, 'max': 0, 'sum': 0, 'count': 0}
+#
+#                 aggregates[time_segment][key]['min'] = safe_min(aggregates[time_segment][key]['min'], value['min'])
+#                 aggregates[time_segment][key]['max'] = safe_max(aggregates[time_segment][key]['max'], value['max'])
+#                 aggregates[time_segment][key]['sum'] = safe_add(aggregates[time_segment][key]['sum'], value['avg'])
+#                 aggregates[time_segment][key]['count'] += 1
+#
+#     for key in aggregates[time_segment]:
+#         if aggregates[time_segment][key]['count'] > 0:
+#             aggregates[time_segment][key]['avg'] = (aggregates[time_segment][key]['sum'] /
+#                                                     aggregates[time_segment][key]['count'])
+#             del aggregates[time_segment][key]['sum'], aggregates[time_segment][key]['count']
+#         else:
+#             aggregates[time_segment][key] = {'min': 0, 'max': 0, 'avg': 0}
+#
+#     return aggregates
+
+
+def safe_add(a, b):
+    if a is None and b is not None:
         return b
-    if b is None:
+    elif a is not None and b is None:
         return a
+    elif a is None and b is None:
+        return None
+    else:
+        return a + b
+
+
+def safe_min(a, b):
+    if a is None: return b
+    if b is None: return a
     return min(a, b)
 
 
 def safe_max(a, b):
-    if a is None:
-        return b
-    if b is None:
-        return a
+    if a is None: return b
+    if b is None: return a
     return max(a, b)
-
-
-def safe_add(a, b):
-    if a is None:
-        a = 0
-    if b is None:
-        b = 0
-    return a + b
 
 
 if __name__ == '__main__':
