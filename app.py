@@ -34,7 +34,7 @@ def post_data():
             2)
 
         path = f"devices/{mac}/{year}/{month}/month/{week}/week/{day}/day/{hour_block}/hour_block"
-        document_ref = db.collection(path).document("hour_block")
+        document_ref = db.collection(path).document("data")
 
         doc = document_ref.get()
         if doc.exists:
