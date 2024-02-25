@@ -101,8 +101,8 @@ def aggregate_hourly_data(hourly_block):
             hour_aggregate = hourly_aggregates[hour_index]
             hour_aggregate[key]['min'] = safe_min(hour_aggregate[key]['min'], value)
             hour_aggregate[key]['max'] = safe_max(hour_aggregate[key]['max'], value)
-            hour_aggregate[key]['sum'] += value
-            hour_aggregate[key]['count'] += 1
+            hour_aggregate[key]['sum'] = safe_add(hour_aggregate[key]['sum'], value)
+            hour_aggregate[key]['count'] += 1 if value is not None else 0
 
     for hour_aggregate in hourly_aggregates:
         for key in hour_aggregate:
