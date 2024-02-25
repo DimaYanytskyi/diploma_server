@@ -46,7 +46,7 @@ def post_data():
         document_ref.set({'data': current_data}, merge=True)
 
         # hourly data
-        aggregated_data = aggregate_hourly_data(db.collection(path).document("hour_block").get().to_dict().get('data'))
+        aggregated_data = aggregate_hourly_data(db.collection(path).document("data").get().to_dict().get('data'))
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data}, merge=True)
 
