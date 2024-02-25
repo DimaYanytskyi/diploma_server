@@ -43,7 +43,6 @@ def post_data():
             current_data = []
 
         current_data.append(data)
-
         document_ref.set({'data': current_data}, merge=True)
 
         # hourly data
@@ -73,7 +72,7 @@ def post_data():
         aggregated_data_ref.set({'data': aggregated_data_monthly}, merge=True)
 
         # yearly data
-        month_index = client_timestamp.month
+        month_index = client_timestamp.month - 1
         aggregated_data_monthly = aggregate_data(month_index, aggregated_data_monthly, 12)
         path = f"devices/{mac}/{year}"
         aggregated_data_ref = db.collection(path).document("aggregated")
@@ -139,82 +138,6 @@ def aggregate_data(time_segment, data_block, array_count):
             aggregates[time_segment][key] = {'min': None, 'max': None, 'avg': None}
 
     return aggregates
-
-
-# def aggregate_daily_blocks(hour_block_index, hourly_block):
-#     daily_aggregates = [{} for _ in range(6)]
-#
-#     for entry in hourly_block:
-#         for key, value in entry.items():
-#             if key not in daily_aggregates[hour_block_index]:
-#                 daily_aggregates[hour_block_index][key] = \
-#                     {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
-#
-#                 daily_aggregates[hour_block_index][key]['min'] = min(daily_aggregates[hour_block_index][key]['min'],
-#                                                                      value['min'])
-#                 daily_aggregates[hour_block_index][key]['max'] = max(daily_aggregates[hour_block_index][key]['max'],
-#                                                                      value['max'])
-#                 daily_aggregates[hour_block_index][key]['sum'] += value['avg']
-#                 daily_aggregates[hour_block_index][key]['count'] += 1
-#
-#     for key in daily_aggregates[hour_block_index]:
-#         if daily_aggregates[hour_block_index][key]['count'] > 0:
-#             daily_aggregates[hour_block_index][key]['avg'] = (daily_aggregates[hour_block_index][key]['sum'] /
-#                                                               daily_aggregates[hour_block_index][key]['count'])
-#             del daily_aggregates[hour_block_index][key]['sum'], daily_aggregates[hour_block_index][key]['count']
-#         else:
-#             daily_aggregates[hour_block_index][key] = {'min': None, 'max': None, 'avg': None}
-#
-#     return daily_aggregates
-#
-#
-# def aggregate_weekly_blocks(day, day_block):
-#     week_aggregates = [{} for _ in range(7)]
-#
-#     for entry in day_block:
-#         for key, value in entry.items():
-#             if key not in week_aggregates[day]:
-#                 week_aggregates[day][key] = \
-#                     {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
-#
-#                 week_aggregates[day][key]['min'] = min(week_aggregates[day][key]['min'], value['min'])
-#                 week_aggregates[day][key]['max'] = max(week_aggregates[day][key]['max'], value['max'])
-#                 week_aggregates[day][key]['sum'] += value['avg']
-#                 week_aggregates[day][key]['count'] += 1
-#
-#     for key in week_aggregates[day]:
-#         if week_aggregates[day][key]['count'] > 0:
-#             week_aggregates[day][key]['avg'] = (week_aggregates[day][key]['sum'] / week_aggregates[day][key]['count'])
-#             del week_aggregates[day][key]['sum'], week_aggregates[day][key]['count']
-#         else:
-#             week_aggregates[day][key] = {'min': None, 'max': None, 'avg': None}
-#
-#     return week_aggregates
-#
-#
-# def aggregate_monthly_blocks(week, week_block):
-#     month_aggregates = [{} for _ in range(5)]
-#
-#     for entry in week_block:
-#         for key, value in entry.items():
-#             if key not in month_aggregates[week]:
-#                 month_aggregates[week][key] = \
-#                     {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
-#
-#                 month_aggregates[week][key]['min'] = min(month_aggregates[week][key]['min'], value['min'])
-#                 month_aggregates[week][key]['max'] = max(month_aggregates[week][key]['max'], value['max'])
-#                 month_aggregates[week][key]['sum'] += value['avg']
-#                 month_aggregates[week][key]['count'] += 1
-#
-#     for key in month_aggregates[week]:
-#         if month_aggregates[week][key]['count'] > 0:
-#             month_aggregates[week][key]['avg'] = (month_aggregates[week][key]['sum']
-#                                                   / month_aggregates[week][key]['count'])
-#             del month_aggregates[week][key]['sum'], month_aggregates[week][key]['count']
-#         else:
-#             month_aggregates[week][key] = {'min': None, 'max': None, 'avg': None}
-#
-#     return month_aggregates
 
 
 if __name__ == '__main__':
