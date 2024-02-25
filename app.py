@@ -126,8 +126,8 @@ def aggregate_data(time_segment, data_block, array_count):
 
                 aggregates[time_segment][key]['min'] = safe_min(aggregates[time_segment][key]['min'], value['min'])
                 aggregates[time_segment][key]['max'] = safe_max(aggregates[time_segment][key]['max'], value['max'])
-                aggregates[time_segment][key]['sum'] += value['avg']
-                aggregates[time_segment][key]['count'] += 1
+                aggregates[time_segment][key]['sum'] = safe_add(aggregates[time_segment][key]['sum'], value['avg'])
+                aggregates[time_segment][key]['count'] += 1 if value['avg'] is not None else 0
 
     for key in aggregates[time_segment]:
         if aggregates[time_segment][key]['count'] > 0:
@@ -154,6 +154,14 @@ def safe_max(a, b):
     if b is None:
         return a
     return max(a, b)
+
+
+def safe_add(a, b):
+    if a is None:
+        a = 0
+    if b is None:
+        b = 0
+    return a + b
 
 
 if __name__ == '__main__':
