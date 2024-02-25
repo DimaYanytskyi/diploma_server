@@ -33,7 +33,7 @@ def post_data():
         hour_block = str(client_timestamp.hour // 4 * 4).zfill(2) + "-" + str(client_timestamp.hour // 4 * 4 + 4).zfill(
             2)
 
-        path = f"devices/{mac}/{year}/{month}/month/{week}/week/{day}/day/{hour_block}/hour_block"
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data/{hour_block}/data"
         document_ref = db.collection(path).document("data")
 
         doc = document_ref.get()
@@ -53,21 +53,21 @@ def post_data():
         # daily data
         hour_block_index = client_timestamp.hour // 4
         aggregated_data_daily = aggregate_data(hour_block_index, aggregated_data, 6)
-        path = f"devices/{mac}/{year}/{month}/month/{week}/week/{day}/day"
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data/{day}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_daily}, merge=True)
 
         # weekly data
         day_index = client_timestamp.day // 7
         aggregated_data_weekly = aggregate_data(day_index, aggregated_data_daily, 7)
-        path = f"devices/{mac}/{year}/{month}/month/{week}/week"
+        path = f"devices/{mac}/{year}/{month}/data/{week}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_weekly}, merge=True)
 
         # monthly data
         week_index = client_timestamp.month // 5
         aggregated_data_monthly = aggregate_data(week_index, aggregated_data_weekly, 5)
-        path = f"devices/{mac}/{year}/{month}/month"
+        path = f"devices/{mac}/{year}/{month}/data"
         aggregated_data_ref = db.collection(path).document("aggregated")
         aggregated_data_ref.set({'data': aggregated_data_monthly}, merge=True)
 
