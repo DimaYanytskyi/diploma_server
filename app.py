@@ -99,8 +99,8 @@ def aggregate_hourly_data(hourly_block):
             if key in ['mac', 'timestamp']:
                 continue
             hour_aggregate = hourly_aggregates[hour_index]
-            hour_aggregate[key]['min'] = min(hour_aggregate[key]['min'], value)
-            hour_aggregate[key]['max'] = max(hour_aggregate[key]['max'], value)
+            hour_aggregate[key]['min'] = safe_min(hour_aggregate[key]['min'], value)
+            hour_aggregate[key]['max'] = safe_max(hour_aggregate[key]['max'], value)
             hour_aggregate[key]['sum'] += value
             hour_aggregate[key]['count'] += 1
 
@@ -124,8 +124,8 @@ def aggregate_data(time_segment, data_block, array_count):
                 aggregates[time_segment][key] = \
                     {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
-                aggregates[time_segment][key]['min'] = min(aggregates[time_segment][key]['min'], value['min'])
-                aggregates[time_segment][key]['max'] = max(aggregates[time_segment][key]['max'], value['max'])
+                aggregates[time_segment][key]['min'] = safe_min(aggregates[time_segment][key]['min'], value['min'])
+                aggregates[time_segment][key]['max'] = safe_max(aggregates[time_segment][key]['max'], value['max'])
                 aggregates[time_segment][key]['sum'] += value['avg']
                 aggregates[time_segment][key]['count'] += 1
 
@@ -138,6 +138,22 @@ def aggregate_data(time_segment, data_block, array_count):
             aggregates[time_segment][key] = {'min': None, 'max': None, 'avg': None}
 
     return aggregates
+
+
+def safe_min(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return min(a, b)
+
+
+def safe_max(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return max(a, b)
 
 
 if __name__ == '__main__':
