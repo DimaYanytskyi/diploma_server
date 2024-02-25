@@ -90,7 +90,7 @@ def aggregate_hourly_data(hourly_block):
     for hour_aggregate in hourly_aggregates:
         for key in hourly_block[0]:
             if key not in ['mac', 'timestamp']:
-                hour_aggregate[key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+                hour_aggregate[key] = {'min': 0, 'max': 0, 'sum': 0, 'count': 0}
 
     for entry in hourly_block:
         entry_datetime = datetime.datetime.fromtimestamp(entry['timestamp'])
@@ -101,7 +101,7 @@ def aggregate_hourly_data(hourly_block):
             hour_aggregate = hourly_aggregates[hour_index]
             hour_aggregate[key]['min'] = safe_min(hour_aggregate[key]['min'], value)
             hour_aggregate[key]['max'] = safe_max(hour_aggregate[key]['max'], value)
-            hour_aggregate[key]['sum'] = safe_add(hour_aggregate[key]['sum'], value)
+            hour_aggregate[key]['sum'] += value
             hour_aggregate[key]['count'] += 1
 
     for hour_aggregate in hourly_aggregates:
@@ -110,7 +110,7 @@ def aggregate_hourly_data(hourly_block):
                 hour_aggregate[key]['avg'] = hour_aggregate[key]['sum'] / hour_aggregate[key]['count']
                 del hour_aggregate[key]['sum'], hour_aggregate[key]['count']
             else:
-                hour_aggregate[key] = {'min': None, 'avg': None, 'max': None}
+                hour_aggregate[key] = {'min': 0, 'avg': 0, 'max': 0}
 
     return hourly_aggregates
 
@@ -122,7 +122,7 @@ def aggregate_data(time_segment, data_block, array_count):
         for key, value in entry.items():
             if key not in aggregates[time_segment]:
                 aggregates[time_segment][key] = \
-                    {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
+                    {'min': 0, 'max': 0, 'sum': 0, 'count': 0}
 
                 aggregates[time_segment][key]['min'] = safe_min(aggregates[time_segment][key]['min'], value['min'])
                 aggregates[time_segment][key]['max'] = safe_max(aggregates[time_segment][key]['max'], value['max'])
@@ -135,7 +135,7 @@ def aggregate_data(time_segment, data_block, array_count):
                                                     aggregates[time_segment][key]['count'])
             del aggregates[time_segment][key]['sum'], aggregates[time_segment][key]['count']
         else:
-            aggregates[time_segment][key] = {'min': None, 'max': None, 'avg': None}
+            aggregates[time_segment][key] = {'min': 0, 'max': 0, 'avg': 0}
 
     return aggregates
 
