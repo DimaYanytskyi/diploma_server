@@ -68,16 +68,16 @@ def aggregate_data(device_id, timestamp):
     aggregate_hourly_data(cursor, device_id, timestamp)
 
     # Aggregate daily data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'hour', 6, 'day', 24)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'hours', 6, 'days', 24)
 
     # Aggregate weekly data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'day', 7, 'week', 7)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'days', 7, 'weeks', 7)
 
     # Aggregate monthly data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'week', 4, 'month', 4)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'weeks', 4, 'months', 4)
 
     # Aggregate yearly data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'month', 12, 'year', 12)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'months', 12, 'years', 12)
 
     mysql.connection.commit()
 
