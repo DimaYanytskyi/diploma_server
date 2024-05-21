@@ -113,10 +113,12 @@ def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_coun
     elif from_period == 'month':
         period_start = period_start.replace(month=((period_start.month - 1) // from_count) * from_count + 1, day=1)
 
-    logging.debug(f"Aggregating {to_period} data from {period_start} to {period_start + datetime.timedelta(**{to_period: to_count})}")
+    logging.debug(f"Aggregating {to_period} data from {period_start}")
 
-    if to_period in ['days', 'weeks']:
-        period_end = period_start + datetime.timedelta(**{to_period: to_count})
+    if to_period == 'days':
+        period_end = period_start + datetime.timedelta(days=to_count)
+    elif to_period == 'weeks':
+        period_end = period_start + datetime.timedelta(weeks=to_count)
     elif to_period == 'months':
         period_end = period_start + relativedelta(months=to_count)
     elif to_period == 'years':
