@@ -144,6 +144,9 @@ def calculate_aggregates(data_block):
             if key in ['mac', 'timestamp']:
                 continue
 
+            if isinstance(value, dict):
+                continue
+
             if key not in aggregates:
                 aggregates[key] = {'min': float('inf'), 'max': float('-inf'), 'sum': 0, 'count': 0}
 
@@ -153,8 +156,10 @@ def calculate_aggregates(data_block):
             aggregates[key]['count'] += 1
 
     for key in aggregates:
-        aggregates[key]['avg'] = aggregates[key]['sum'] / aggregates[key]['count'] if aggregates[key][
-                                                                                          'count'] > 0 else None
+        if aggregates[key]['count'] > 0:
+            aggregates[key]['avg'] = aggregates[key]['sum'] / aggregates[key]['count']
+        else:
+            aggregates[key]['avg'] = None
         del aggregates[key]['sum'], aggregates[key]['count']
 
     return aggregates
