@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from datetime import timedelta
 from flask import Flask, request, jsonify
 from flask_mysqldb import MySQL
 import logging
@@ -45,49 +46,11 @@ def post_data():
         )
         mysql.connection.commit()
 
-        update_aggregated_data(client_timestamp.date(), device_id)
-
         return jsonify({"status": "success", "message": "Data posted to MySQL successfully."}), 200
 
     except Exception as e:
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
-def update_aggregated_data(date, device_id):
-    get_hourly_averages(date, device_id)
-
-
-def get_hourly_averages(date_requested, device_id):
-    cursor = mysql.connection.cursor()
-    query = """
-    SELECT 
-        HOUR(Timestamp) as Hour, 
-        AVG(Data) as AverageData 
-    FROM 
-        RawData 
-    WHERE 
-        DeviceID = %s AND 
-        DATE(Timestamp) = %s 
-    GROUP BY 
-        HOUR(Timestamp);
-    """
-
-    cursor.execute(query, (device_id, date_requested))
-    results = cursor.fetchall()
-
-    for result in results:
-        hour = result['Hour']
-        average_data = result['AverageData']
-        upsert_query = """
-        INSERT INTO AggregatedData (DeviceID, Date, Hour, AverageData) 
-        VALUES (%s, %s, %s, %s) 
-        ON DUPLICATE KEY UPDATE 
-        AverageData = VALUES(AverageData);
-        """
-        cursor.execute(upsert_query, (device_id, date_requested, hour, average_data))
-
-    mysql.connection.commit()
 
 
 if __name__ == '__main__':
