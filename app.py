@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 
+from dateutil.relativedelta import relativedelta
 from flask import Flask, request, jsonify
 from flask_mysqldb import MySQL
 
@@ -68,16 +69,16 @@ def aggregate_data(device_id, timestamp):
     aggregate_hourly_data(cursor, device_id, timestamp)
 
     # Aggregate daily data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'hours', 6, 'days', 24)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'hour', 6, 'days', 1)
 
     # Aggregate weekly data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'days', 7, 'weeks', 7)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'day', 7, 'weeks', 1)
 
     # Aggregate monthly data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'weeks', 4, 'months', 4)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'week', 4, 'months', 1)
 
     # Aggregate yearly data
-    aggregate_periodic_data(cursor, device_id, timestamp, 'months', 12, 'years', 12)
+    aggregate_periodic_data(cursor, device_id, timestamp, 'month', 12, 'years', 1)
 
     mysql.connection.commit()
 
@@ -102,20 +103,28 @@ def aggregate_hourly_data(cursor, device_id, timestamp):
 
 
 def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_count, to_period, to_count):
+    global period_end
     period_start = timestamp.replace(minute=0, second=0, microsecond=0)
-    if from_period == 'hours':
+    if from_period == 'hour':
         period_start = period_start.replace(hour=(period_start.hour // from_count) * from_count)
-    elif from_period == 'days':
+    elif from_period == 'day':
         period_start = period_start - datetime.timedelta(days=(period_start.weekday() % from_count))
-    elif from_period == 'weeks':
+    elif from_period == 'week':
         period_start = period_start.replace(day=1)
-    elif from_period == 'months':
+    elif from_period == 'month':
         period_start = period_start.replace(month=((period_start.month - 1) // from_count) * from_count + 1, day=1)
+
+    if to_period in ['days', 'weeks']:
+        period_end = period_start + datetime.timedelta(**{to_period: to_count})
+    elif to_period == 'months':
+        period_end = period_start + relativedelta(months=to_count)
+    elif to_period == 'years':
+        period_end = period_start + relativedelta(years=to_count)
 
     cursor.execute("""
         SELECT Data FROM AggregatedData
         WHERE DeviceID = %s AND PeriodType = %s AND PeriodStart >= %s AND PeriodStart < %s
-    """, (device_id, from_period, period_start, period_start + datetime.timedelta(**{to_period: to_count})))
+    """, (device_id, from_period, period_start, period_end))
 
     raw_data = [json.loads(row['Data']) for row in cursor.fetchall()]
     aggregated_data = calculate_aggregates(raw_data)
@@ -124,7 +133,7 @@ def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_coun
         INSERT INTO AggregatedData (DeviceID, PeriodType, PeriodStart, Data)
         VALUES (%s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE Data = %s
-    """, (device_id, to_period, period_start, json.dumps(aggregated_data), json.dumps(aggregated_data)))
+    """, (device_id, to_period.rstrip('s'), period_start, json.dumps(aggregated_data), json.dumps(aggregated_data)))
 
 
 def calculate_aggregates(data_block):
