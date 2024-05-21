@@ -103,13 +103,13 @@ def aggregate_hourly_data(cursor, device_id, timestamp):
 
 def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_count, to_period, to_count):
     period_start = timestamp.replace(minute=0, second=0, microsecond=0)
-    if from_period == 'hour':
+    if from_period == 'hours':
         period_start = period_start.replace(hour=(period_start.hour // from_count) * from_count)
-    elif from_period == 'day':
+    elif from_period == 'days':
         period_start = period_start - datetime.timedelta(days=(period_start.weekday() % from_count))
-    elif from_period == 'week':
+    elif from_period == 'weeks':
         period_start = period_start.replace(day=1)
-    elif from_period == 'month':
+    elif from_period == 'months':
         period_start = period_start.replace(month=((period_start.month - 1) // from_count) * from_count + 1, day=1)
 
     cursor.execute("""
