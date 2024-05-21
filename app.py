@@ -40,9 +40,11 @@ def post_data():
 
         device_id = device['DeviceID']
 
+        # Insert individual parameters into the new RawData table
         cursor.execute(
-            "INSERT INTO RawData (DeviceID, Timestamp, Data) VALUES (%s, %s, %s)",
-            (device_id, client_timestamp, json.dumps(data))
+            "INSERT INTO RawData (DeviceID, Timestamp, TVOC, Light, BmpTemp, Humidity, Moisture, BmpAltitude, "
+            "BmpPressure, Temperature) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (device_id, client_timestamp, data.get('tvoc'), data.get('light'), data.get('bmpTemp'), data.get('humidity'), data.get('moisture'), data.get('bmpAltitude'), data.get('bmpPressure'), data.get('temperature'))
         )
         mysql.connection.commit()
 
