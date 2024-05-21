@@ -101,6 +101,7 @@ def aggregate_hourly_data(cursor, device_id, timestamp):
         ON DUPLICATE KEY UPDATE Data = %s
     """, (device_id, hour_start, json.dumps(aggregated_data), json.dumps(aggregated_data)))
 
+
 def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_count, to_period, to_count):
     period_start = timestamp.replace(minute=0, second=0, microsecond=0)
     if from_period == 'hour':
@@ -111,6 +112,8 @@ def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_coun
         period_start = period_start.replace(day=1)
     elif from_period == 'month':
         period_start = period_start.replace(month=((period_start.month - 1) // from_count) * from_count + 1, day=1)
+
+    logging.debug(f"Aggregating {to_period} data from {period_start} to {period_start + datetime.timedelta(**{to_period: to_count})}")
 
     if to_period in ['days', 'weeks']:
         period_end = period_start + datetime.timedelta(**{to_period: to_count})
@@ -125,9 +128,14 @@ def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_coun
     """, (device_id, from_period, period_start, period_end))
 
     raw_data = [json.loads(row['Data']) for row in cursor.fetchall()]
-    logging.debug(f"Aggregating data for {to_period}: {raw_data}")  # Add debug logging
+    logging.debug(f"Raw data for {to_period}: {raw_data}")
+
+    if not raw_data:
+        logging.debug(f"No data found for {to_period} aggregation.")
+        return
+
     aggregated_data = calculate_aggregates(raw_data)
-    logging.debug(f"Aggregated data for {to_period}: {aggregated_data}")  # Add debug logging
+    logging.debug(f"Aggregated data for {to_period}: {aggregated_data}")
 
     cursor.execute("""
         INSERT INTO AggregatedData (DeviceID, PeriodType, PeriodStart, Data)
@@ -135,8 +143,10 @@ def aggregate_periodic_data(cursor, device_id, timestamp, from_period, from_coun
         ON DUPLICATE KEY UPDATE Data = %s
     """, (device_id, to_period.rstrip('s'), period_start, json.dumps(aggregated_data), json.dumps(aggregated_data)))
 
+
 def calculate_aggregates(data_block):
     aggregates = {}
+    logging.debug(f"Calculating aggregates for data block: {data_block}")
 
     for entry in data_block:
         for key, value in entry.items():
@@ -162,7 +172,9 @@ def calculate_aggregates(data_block):
             aggregates[key]['avg'] = None
         del aggregates[key]['sum'], aggregates[key]['count']
 
+    logging.debug(f"Final aggregates: {aggregates}")
     return aggregates
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
